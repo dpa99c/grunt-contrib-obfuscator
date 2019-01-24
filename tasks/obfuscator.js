@@ -5,8 +5,7 @@ var chalk = require('chalk');
 var JavaScriptObfuscator = require('javascript-obfuscator');
 
 function obfuscate(source, options) {
-  var obfuscationResult = JavaScriptObfuscator.obfuscate(source, options);
-  return obfuscationResult.getObfuscatedCode();
+  return JavaScriptObfuscator.obfuscate(source, options);
 }
 
 // Converts \r\n to \n
@@ -44,22 +43,22 @@ module.exports = function (grunt) {
 
       var availableFiles = getAvailableFiles(file.src);
 
-      if (options.sourceMap) {
-        grunt.log.error('Source Maps are not available yet.');
-        return;
-      }
-
       var obfuscated = '';
 
       var filenameDest = getFilename(file.dest);
-
       if (filenameDest) {
         try {
           var totalCode = availableFiles.map(function (file) {
               return grunt.file.read(file);
           }).join('');
 
-          obfuscated = obfuscate(totalCode, options);
+          var obfuscationResult = obfuscate(totalCode, options);
+          obfuscated = obfuscationResult.getObfuscatedCode();
+          if(options.sourceMap && options.sourceMapMode !== 'inline'){
+            var sourceMap = obfuscationResult.getSourceMap(),
+                sourceMapFileDest = file.dest+'.map';
+                grunt.file.write(sourceMapFileDest, sourceMap)
+          }
 
         } catch (err) {
           grunt.log.error(err);
